@@ -7,52 +7,91 @@
 #include "RSAClient.hpp"
 #include <ctime>
 #include <gmp.h>
-
+const uint PRIME_SIZE = 256;// size of the prime numbers in bits
 RSAClient::RSAClient() {
     // initialize the gmp variables
     mpz_init(m_p);
     mpz_init(m_q);
-
+    mpz_init(m_n);
+    mpz_init(m_e);
+    mpz_init(m_d);
+    mpz_init(m_phi);
     // generate the prime numbers
-    generatePrimes();
+    generateKeys();
 }
 
 RSAClient::~RSAClient() {
     // clear the gmp variables
     mpz_clear(m_p);
     mpz_clear(m_q);
+    mpz_clear(m_n);
+    mpz_clear(m_e);
+    mpz_clear(m_d);
+    mpz_clear(m_phi);
 }
 
-void RSAClient::generatePrimes() {
+void RSAClient::generateKeys() {
 
-    // generate primes p and q
-    // 1. Initialize a GMP random state.
-    gmp_randstate_t state;
-    gmp_randinit_default(state);
-
-    // 2. Seed the random number generator.
-    //    Here we use the current time to seed the generator.
-    unsigned long seed = time(nullptr);
-    gmp_randseed_ui(state, seed);
-
-    // 3. Initialize an mpz_t variable to hold our large random number.
-    mpz_t large_random;
-    mpz_init(large_random);
-
-    // 4. Generate a random number with a specified number of bits.
-    mpz_urandomb(large_random, state, 256);
-
-    // 5. Check if the number is prime
-    while (!fermatTest(large_random)) {
-        mpz_urandomb(large_random, state, 256);
-    }
-
-    mpz_set(m_p,large_random);
+    // generate the prime numbers
+    genPrime(m_p);
+    genPrime(m_q);
 
     mpz_out_str(stdout, 10, m_p);
+
+    // calculate n
+    mpz_mul(m_n, m_p, m_q);
+
+    // calculate phi
+    mpz_mul(m_phi, m_p-1, m_q-1);
+
+    // calculate e
+    generateEValue(m_e);
+
+    // calculate d
+    mpz_invert(m_d, m_e, m_phi);
+
+    // set the keys
+    m_publicKey.a = m_e;
 }
 
+void RSAClient::generateEValue(mpz_t& returnVal) {
+    // generate a random number
+    gmp_randstate_t state;
+    gmp_randinit_default(state);
+    unsigned long seed = time(nullptr);
+    gmp_randseed_ui(state, seed);
+    mpz_urandomb(returnVal, state, PRIME_SIZE);
 
+    // check if the number is coprime with n
+    mpz_t gcdResult;
+    mpz_init(gcdResult);
+    while (mpz_cmp_si(gcdResult,1)==0){
+        mpz_urandomb(returnVal, state, PRIME_SIZE);
+        mpz_gcd(gcdResult,returnVal, m_phi);
+    }
+
+    mpz_clear(gcdResult);
+}
+
+void RSAClient::genPrime(mpz_t& returnVal) {
+    // generate primes p and q
+        // 1. Initialize a GMP random state.
+        gmp_randstate_t state;
+        gmp_randinit_default(state);
+
+        // 2. Seed the random number generator.
+        //    Here we use the current time to seed the generator.
+        unsigned long seed = time(nullptr);
+        gmp_randseed_ui(state, seed);
+
+        // 4. Generate a random number with a specified number of bits.
+        mpz_urandomb(returnVal, state, PRIME_SIZE);
+
+        // 5. Check if the number is prime
+        while (!fermatTest(returnVal)) {
+            mpz_urandomb(returnVal, state, PRIME_SIZE);
+        }
+}
 
 // Fermat's test: returns false if candidate n is composite
 bool RSAClient::fermatTest(const mpz_t n, int iterations) {
