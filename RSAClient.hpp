@@ -7,11 +7,7 @@
 #ifndef RSACLIENT_HPP
 #define RSACLIENT_HPP
 #include <gmpxx.h>
-
-struct RSAKey {
-    mpz_class& a;
-    mpz_class& b;
-};
+#include <utility>
 
 class RSAClient {
 public:
@@ -20,6 +16,7 @@ public:
 
     void encrypt(std::string& message, mpz_class& returnVal);
     void decrypt(mpz_class& message, std::string& returnVal);
+    std::pair<mpz_class,mpz_class> getPublicKey();
 private:
     void generateKeys();
 
@@ -34,8 +31,8 @@ private:
     mpz_class m_e;
     mpz_class m_d;
     mpz_class m_phi;
-    RSAKey m_publicKey;
-    RSAKey m_privateKey;
+    std::pair<mpz_class,mpz_class> m_publicKey;
+    std::pair<mpz_class,mpz_class> m_privateKey;
 };
 
 #endif // RSACLIENT_HPP
