@@ -4,15 +4,14 @@
 
 int main() {
     RSAClient client;
-    RSAClient client2;
 
-    std::string message = "Hello, World!",message2;
+    std::string message = "H",message2;
 
     mpz_class encryptedMessage;
-    client.encrypt(message, encryptedMessage);
     auto publicKey = client.getPublicKey();
-    client2.decrypt(encryptedMessage, message2, publicKey);
+    client.encrypt(message, encryptedMessage,publicKey);
+    client.decrypt(encryptedMessage, message2);
 
-    std::cout << "\n" << message2 << std::endl;
+    std::cout << "\nMessage: " << message2 << std::endl;
     return 0;
 }

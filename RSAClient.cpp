@@ -4,8 +4,9 @@
 * William Aey
 */
 
+#include <iostream>
 #include "RSAClient.hpp"
-#include <ctime>
+#include <chrono>
 #include <gmp.h>
 const uint PRIME_SIZE = 256;// size of the prime numbers in bits
 RSAClient::RSAClient() {
@@ -16,18 +17,26 @@ RSAClient::RSAClient() {
 RSAClient::~RSAClient() {
 }
 
-void RSAClient::encrypt(std::string& message, mpz_class& returnVal) {
+void RSAClient::encrypt(std::string& message, mpz_class& returnVal, std::pair<mpz_class,mpz_class>& publicKey) {
     // convert the message to a number
     mpz_class messageNum;
     mpz_import(messageNum.get_mpz_t(), message.size(), 1, 1, 0, 0, message.c_str());
 
+    std::cout << "Message as number: ";
+    mpz_out_str(stdout, 10, messageNum.get_mpz_t());
+    std::cout << std::endl;
+
     // encrypt the message
-    mpz_powm(returnVal.get_mpz_t(), messageNum.get_mpz_t(), m_publicKey.first.get_mpz_t(), m_publicKey.second.get_mpz_t());
+    mpz_powm(returnVal.get_mpz_t(), messageNum.get_mpz_t(), publicKey.first.get_mpz_t(), publicKey.second.get_mpz_t());
 }
 
-void RSAClient::decrypt(mpz_class& message, std::string& returnVal, std::pair<mpz_class,mpz_class>& publicKey) {
+void RSAClient::decrypt(mpz_class& message, std::string& returnVal) {
     // decrypt the message
-    mpz_powm(message.get_mpz_t(), message.get_mpz_t(), publicKey.first.get_mpz_t(), publicKey.second.get_mpz_t());
+    mpz_powm(message.get_mpz_t(), message.get_mpz_t(), m_privateKey.first.get_mpz_t(), m_privateKey.second.get_mpz_t());
+
+    std::cout << "Decrypted number: ";
+    mpz_out_str(stdout, 10, message.get_mpz_t());
+    std::cout << std::endl;
 
     // convert the message to a string
     size_t count;
@@ -44,6 +53,10 @@ void RSAClient::generateKeys() {
     genPrime(m_q);
 
     mpz_out_str(stdout, 10, m_p.get_mpz_t());
+    std::cout << std::endl;
+
+    mpz_out_str(stdout, 10, m_q.get_mpz_t());
+    std::cout << std::endl;
 
     // calculate n
     m_n = m_p * m_q;
@@ -66,13 +79,13 @@ void RSAClient::generateEValue(mpz_class& returnVal) {
     // generate a random number
     gmp_randstate_t state;
     gmp_randinit_default(state);
-    unsigned long seed = time(nullptr);
+    unsigned long seed = static_cast<unsigned long>(std::chrono::system_clock::now().time_since_epoch().count());
     gmp_randseed_ui(state, seed);
     mpz_urandomb(returnVal.get_mpz_t(), state, PRIME_SIZE);
 
     // check if the number is coprime with n
     mpz_class gcdResult;
-    while (gcdResult==1){
+    while (gcdResult!=1){
         mpz_urandomb(returnVal.get_mpz_t(), state, PRIME_SIZE);
         mpz_gcd(gcdResult.get_mpz_t(),returnVal.get_mpz_t(), m_phi.get_mpz_t());
     }
@@ -87,7 +100,7 @@ void RSAClient::genPrime(mpz_class& returnVal) {
 
         // 2. Seed the random number generator.
         //    Here we use the current time to seed the generator.
-        unsigned long seed = time(nullptr);
+        unsigned long seed = static_cast<unsigned long>(std::chrono::system_clock::now().time_since_epoch().count());
         gmp_randseed_ui(state, seed);
 
         // 4. Generate a random number with a specified number of bits.
@@ -117,10 +130,8 @@ bool RSAClient::fermatTest(const mpz_class n, int iterations) {
     // 2. Initialize and seed GMP random state
     gmp_randstate_t randState;
     gmp_randinit_mt(randState);
-    mpz_class seed;
-    // Seed with current time (for demonstration; in production use a better seed)
-    mpz_set_ui(seed.get_mpz_t(), static_cast<unsigned long>(std::time(nullptr)));
-    gmp_randseed(randState, seed.get_mpz_t());
+    unsigned long seed = static_cast<unsigned long>(std::chrono::system_clock::now().time_since_epoch().count());
+    gmp_randseed_ui(randState, seed);
 
     // 3. Perform 'iterations' rounds of Fermat test
     for (int i = 0; i < iterations; i++) {
