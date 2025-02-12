@@ -16,6 +16,27 @@ RSAClient::RSAClient() {
 RSAClient::~RSAClient() {
 }
 
+void RSAClient::encrypt(std::string& message, mpz_class& returnVal) {
+    // convert the message to a number
+    mpz_class messageNum;
+    mpz_import(messageNum.get_mpz_t(), message.size(), 1, 1, 0, 0, message.c_str());
+
+    // encrypt the message
+    mpz_powm(returnVal.get_mpz_t(), messageNum.get_mpz_t(), m_publicKey.first.get_mpz_t(), m_publicKey.second.get_mpz_t());
+}
+
+void RSAClient::decrypt(mpz_class& message, std::string& returnVal, std::pair<mpz_class,mpz_class>& publicKey) {
+    // decrypt the message
+    mpz_powm(message.get_mpz_t(), message.get_mpz_t(), publicKey.first.get_mpz_t(), publicKey.second.get_mpz_t());
+
+    // convert the message to a string
+    size_t count;
+    char* buffer = new char[mpz_sizeinbase(message.get_mpz_t(), 10)];
+    mpz_export(buffer, &count, 1, 1, 0, 0, message.get_mpz_t());
+    returnVal = std::string(buffer, count);
+    delete[] buffer;
+}
+
 void RSAClient::generateKeys() {
 
     // generate the prime numbers

@@ -15,14 +15,14 @@ public:
     ~RSAClient();
 
     void encrypt(std::string& message, mpz_class& returnVal);
-    void decrypt(mpz_class& message, std::string& returnVal);
-    std::pair<mpz_class,mpz_class> getPublicKey();
+    void decrypt(mpz_class& message, std::string& returnVal, std::pair<mpz_class,mpz_class>& publicKey);
+    const std::pair<mpz_class,mpz_class>& getPublicKey() { return m_publicKey; };
 private:
     void generateKeys();
 
     void generateEValue(mpz_class& returnVal);
     void genPrime(mpz_class& returnVal);
-    bool fermatTest(const mpz_class n, int iterations = 10);
+    bool fermatTest(const mpz_class n, int iterations = 1000);
     void saveKeysToFile(std::string& filename);
 private:
     mpz_class m_p;
