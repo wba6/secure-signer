@@ -47,11 +47,20 @@ void RSAClient::decrypt(mpz_class& message, std::string& returnVal) {
     delete[] buffer;
 }
 
-void RSAClient::saveKeysToFile(const char* filename){
+void RSAClient::savePrimesToFile(const char* filename){
     std::ofstream file(filename);
 
     file << m_p.get_str() << std::endl;
     file << m_q.get_str() << std::endl;
+
+    file.close();
+}
+
+void RSAClient::saveKeyToFile(const char* filename, std::pair<mpz_class,mpz_class>& key){
+    std::ofstream file(filename);
+
+    file << key.first.get_str() << std::endl;
+    file << key.second.get_str() << std::endl;
 
     file.close();
 }
@@ -84,7 +93,9 @@ void RSAClient::generateKeys() {
     m_publicKey = std::make_pair(m_e, m_n);
     m_privateKey = std::make_pair(m_d, m_n);
 
-    saveKeysToFile("p_q.txt");
+    savePrimesToFile("p_q.txt");
+    saveKeyToFile("e_n.txt", m_publicKey);
+    saveKeyToFile("d_n.txt", m_privateKey);
 }
 
 void RSAClient::generateEValue(mpz_class& returnVal) {
