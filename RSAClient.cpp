@@ -8,6 +8,7 @@
 #include "RSAClient.hpp"
 #include <chrono>
 #include <gmp.h>
+#include <fstream>
 const uint PRIME_SIZE = 256;// size of the prime numbers in bits
 RSAClient::RSAClient() {
     // generate the prime numbers
@@ -46,6 +47,15 @@ void RSAClient::decrypt(mpz_class& message, std::string& returnVal) {
     delete[] buffer;
 }
 
+void RSAClient::saveKeysToFile(const char* filename){
+    std::ofstream file(filename);
+
+    file << m_p.get_str() << std::endl;
+    file << m_q.get_str() << std::endl;
+
+    file.close();
+}
+
 void RSAClient::generateKeys() {
 
     // generate the prime numbers
@@ -73,6 +83,8 @@ void RSAClient::generateKeys() {
     // set the keys
     m_publicKey = std::make_pair(m_e, m_n);
     m_privateKey = std::make_pair(m_d, m_n);
+
+    saveKeysToFile("p_q.txt");
 }
 
 void RSAClient::generateEValue(mpz_class& returnVal) {

@@ -23,7 +23,7 @@ private:
     void generateEValue(mpz_class& returnVal);
     void genPrime(mpz_class& returnVal);
     bool fermatTest(const mpz_class n, int iterations = 1000);
-    void saveKeysToFile(std::string& filename);
+    void saveKeysToFile(const char* filename);
 private:
     mpz_class m_p;
     mpz_class m_q;
