@@ -1,11 +1,10 @@
 #include "RSAClient.hpp"
-#include "gmp.h"
 #include <iostream>
 
 int main() {
     RSAClient client;
 
-    std::string message = "H",message2;
+    std::string message = "Hello world",message2;
 
     mpz_class encryptedMessage;
     auto publicKey = client.getPublicKey();
