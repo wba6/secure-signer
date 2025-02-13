@@ -37,8 +37,32 @@ void RSAClient::sign(const std::string& fileName) {
     //save signature to file
     std::string signedFileName = fileName + ".signed";
     std::ofstream file(signedFileName);
-    file << fileContents << signature.get_str();
+    file << fileContents << mpz_get_str(nullptr, 16, signature.get_mpz_t());
     file.close();
+}
+
+bool RSAClient::checkSignature(const std::string& fileName, const std::pair<mpz_class,mpz_class>& publicKey) {
+    std::string hexMessage, fileContentsSigned = loadFile(fileName);
+    std::string fileContents = fileContentsSigned.substr(0,fileContentsSigned.size()-(64*2));
+    std::string signatureStr = fileContentsSigned.substr(fileContentsSigned.size()-(64*2),fileContentsSigned.size()-1);
+    std::cout << "Signature: " << signatureStr << "\n" << "fileContents" << fileContents << std::endl;
+    picosha2::hash256_hex_string(fileContents, hexMessage);
+
+    mpz_class signatureNum;
+    if (mpz_set_str(signatureNum.get_mpz_t(), signatureStr.c_str(), 16) != 0) {
+        throw std::runtime_error("Invalid hex string for encryption.");
+    }
+
+    mpz_class decryptedSignature;
+    mpz_powm(decryptedSignature.get_mpz_t(),
+                 signatureNum.get_mpz_t(),
+                 publicKey.first.get_mpz_t(),
+                 publicKey.second.get_mpz_t());
+
+    std::cout << "Decrypted signature: " << mpz_get_str(nullptr, 16, decryptedSignature.get_mpz_t()) << std::endl;
+    std::cout << "Hex message: " << hexMessage << std::endl;
+
+    return mpz_get_str(nullptr, 16, decryptedSignature.get_mpz_t()) == hexMessage;
 }
 
 void RSAClient::encrypt(const std::string& hexMessage,

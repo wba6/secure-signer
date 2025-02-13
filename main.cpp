@@ -30,6 +30,12 @@ int main() {
     std::cout << "\nMessage: " << message2 << std::endl;
 
     client.sign("testFile.txt");
+    if (client.checkSignature("testFile.txt.signed", publicKey)) {
+        std::cout << "Signature is valid!" << std::endl;
+    } else {
+        std::cout << "Signature is invalid!" << std::endl;
+    }
+
     return 0;
 }
 
