@@ -28,6 +28,8 @@ int main() {
     }
 
     std::cout << "\nMessage: " << message2 << std::endl;
+
+    client.sign("testFile.txt");
     return 0;
 }
 

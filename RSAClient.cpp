@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include "RSAClient.hpp"
+#include "PicoSHA2/picosha2.h"
 #include <chrono>
 #include <gmp.h>
 #include <fstream>
@@ -16,6 +17,28 @@ RSAClient::RSAClient() {
 }
 
 RSAClient::~RSAClient() {
+}
+
+void RSAClient::sign(const std::string& fileName) {
+    std::string hexMessage, fileContents = loadFile(fileName);
+    picosha2::hash256_hex_string(fileContents, hexMessage);
+
+    mpz_class messageNum;
+    if (mpz_set_str(messageNum.get_mpz_t(), hexMessage.c_str(), 16) != 0) {
+        throw std::runtime_error("Invalid hex string for encryption.");
+    }
+
+    mpz_class signature;
+    mpz_powm(signature.get_mpz_t(),
+                 messageNum.get_mpz_t(),
+                 m_privateKey.first.get_mpz_t(),
+                 m_privateKey.second.get_mpz_t());
+
+    //save signature to file
+    std::string signedFileName = fileName + ".signed";
+    std::ofstream file(signedFileName);
+    file << fileContents << signature.get_str();
+    file.close();
 }
 
 void RSAClient::encrypt(const std::string& hexMessage,
@@ -194,4 +217,11 @@ bool RSAClient::fermatTest(const mpz_class n, int iterations) {
 
     // Passed all rounds => probably prime
     return true;
+}
+
+std::string RSAClient::loadFile(std::string filename){
+    std::ifstream t(filename);
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+    return (buffer.str());
 }
