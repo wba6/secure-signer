@@ -2,10 +2,11 @@
 #include <iostream>
 #include "PicoSHA2/picosha2.h"
 
+std::string loadFile(std::string filename);
 int main() {
     RSAClient client;
 
-    std::string message = "Hello world",message2;
+    std::string message = loadFile("testFile.txt"),message2;
 
     std::string hash_hex_str;
     picosha2::hash256_hex_string(message, hash_hex_str);
@@ -28,4 +29,11 @@ int main() {
 
     std::cout << "\nMessage: " << message2 << std::endl;
     return 0;
+}
+
+std::string loadFile(std::string filename){
+    std::ifstream t(filename);
+    std::stringstream buffer;
+    buffer << t.rdbuf();
+    return (buffer.str());
 }
