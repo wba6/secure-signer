@@ -18,34 +18,44 @@ RSAClient::RSAClient() {
 RSAClient::~RSAClient() {
 }
 
-void RSAClient::encrypt(std::string& message, mpz_class& returnVal, std::pair<mpz_class,mpz_class>& publicKey) {
-    // convert the message to a number
+void RSAClient::encrypt(const std::string& hexMessage,
+                        mpz_class& cipher,
+                        const std::pair<mpz_class, mpz_class>& publicKey) {
+    // Convert the hex string to a number (base 16)
     mpz_class messageNum;
-    mpz_import(messageNum.get_mpz_t(), message.size(), 1, 1, 0, 0, message.c_str());
+    if (mpz_set_str(messageNum.get_mpz_t(), hexMessage.c_str(), 16) != 0) {
+        throw std::runtime_error("Invalid hex string for encryption.");
+    }
 
     std::cout << "Message as number: ";
     mpz_out_str(stdout, 10, messageNum.get_mpz_t());
     std::cout << std::endl;
 
-    // encrypt the message
-    mpz_powm(returnVal.get_mpz_t(), messageNum.get_mpz_t(), publicKey.first.get_mpz_t(), publicKey.second.get_mpz_t());
+    // Encrypt: cipher = messageNum^e mod n
+    mpz_powm(cipher.get_mpz_t(),
+             messageNum.get_mpz_t(),
+             publicKey.first.get_mpz_t(),
+             publicKey.second.get_mpz_t());
 }
 
-void RSAClient::decrypt(mpz_class& message, std::string& returnVal) {
-    // decrypt the message
-    mpz_powm(message.get_mpz_t(), message.get_mpz_t(), m_privateKey.first.get_mpz_t(), m_privateKey.second.get_mpz_t());
+void RSAClient::decrypt(const mpz_class& cipher, std::string& hexMessageOut) {
+    // Decrypt: decrypted = cipher^d mod n, using your stored private key (d, n)
+    mpz_class decrypted;
+    mpz_powm(decrypted.get_mpz_t(),
+             cipher.get_mpz_t(),
+             m_privateKey.first.get_mpz_t(),   // d
+             m_privateKey.second.get_mpz_t()); // n
 
     std::cout << "Decrypted number: ";
-    mpz_out_str(stdout, 10, message.get_mpz_t());
+    mpz_out_str(stdout, 10, decrypted.get_mpz_t());
     std::cout << std::endl;
 
-    // convert the message to a string
-    size_t count;
-    char* buffer = new char[mpz_sizeinbase(message.get_mpz_t(), 10)];
-    mpz_export(buffer, &count, 1, 1, 0, 0, message.get_mpz_t());
-    returnVal = std::string(buffer, count);
-    delete[] buffer;
+    // Convert the decrypted number back to a hex string
+    char* hexStr = mpz_get_str(nullptr, 16, decrypted.get_mpz_t());
+    hexMessageOut = std::string(hexStr);
+    free(hexStr); // mpz_get_str uses malloc() internally
 }
+
 
 void RSAClient::savePrimesToFile(const char* filename){
     std::ofstream file(filename);

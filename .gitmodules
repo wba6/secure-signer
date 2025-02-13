@@ -1,0 +1,3 @@
+[submodule "vendor/PicoSHA2"]
+	path = vendor/PicoSHA2
+	url = git@github.com:wba6/PicoSHA2.git
