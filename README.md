@@ -52,6 +52,8 @@ After the build completes, you can run the executable. For example, from the `bu
 ./secure_signer
 ```
 
+**Note:** All files are relative to the executable file
+
 ### Troubleshooting
 - **GMP Not Found:** If you see errors about GMP not being found, double-check that GMP is installed and that its header and library paths are accessible. You may need to specify additional paths to CMake via `-DGMP_INCLUDE_DIR` and `-DGMP_LIBRARY` options.
 - **Compiler Issues:** Ensure that you have a C++ compiler that supports C++17 and that it is properly set up in your environment.
