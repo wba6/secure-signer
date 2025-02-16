@@ -1,8 +1,7 @@
 # secure-signer
 A app that allows you to sign a document using SHA256 and RSA to varify the signature
 
-Below are the step-by-step instructions to build the project using the provided CMake configuration.
-
+## Build Instructions
 ### 1. **Clone or Download the Source**
 Make sure you have the source code (including `main.cpp`, `RSAClient.cpp`, `RSAClient.hpp`, `User.cpp`, and `User.hpp`) and the `CMakeLists.txt` file in your project directory.
 
