@@ -12,7 +12,7 @@
 class RSAClient {
 public:
     RSAClient();
-    ~RSAClient();
+    ~RSAClient() = default;
 
     void sign(const std::string& fileName);
     bool checkSignature(const std::string& fileName, const std::pair<mpz_class,mpz_class>& publicKey);
@@ -36,6 +36,7 @@ private:
     mpz_class m_phi;
     std::pair<mpz_class,mpz_class> m_publicKey;
     std::pair<mpz_class,mpz_class> m_privateKey;
+    const uint PRIME_SIZE = 256;// size of the prime numbers in bits
 };
 
 #endif // RSACLIENT_HPP

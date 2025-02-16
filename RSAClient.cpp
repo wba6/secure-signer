@@ -10,15 +10,18 @@
 #include <chrono>
 #include <gmp.h>
 #include <fstream>
-const uint PRIME_SIZE = 256;// size of the prime numbers in bits
+
+// constructor
 RSAClient::RSAClient() {
     // generate the prime numbers
     generateKeys();
 }
 
-RSAClient::~RSAClient() {
-}
-
+/*
+* sign a file by putting the encrypted hash of the file in the file
+*
+* @param fileName : the name of the file to sign
+*/
 void RSAClient::sign(const std::string& fileName) {
     std::string hexMessage, fileContents = loadFile(fileName);
     picosha2::hash256_hex_string(fileContents, hexMessage);
@@ -41,6 +44,12 @@ void RSAClient::sign(const std::string& fileName) {
     file.close();
 }
 
+/*
+* check the signature of a file
+*
+* @param fileName : the name of the file to check
+* @param publicKey : the public key to use to check the signature
+*/
 bool RSAClient::checkSignature(const std::string& fileName, const std::pair<mpz_class,mpz_class>& publicKey) {
     std::string hexMessage, fileContentsSigned = loadFile(fileName);
     std::string fileContents = fileContentsSigned.substr(0,fileContentsSigned.size()-(64*2));
@@ -103,7 +112,11 @@ void RSAClient::decrypt(const mpz_class& cipher, std::string& hexMessageOut) {
     free(hexStr); // mpz_get_str uses malloc() internally
 }
 
-
+/*
+* save the prime numbers to a file
+*
+* @param filename : the name of the file to save to
+*/
 void RSAClient::savePrimesToFile(const char* filename){
     std::ofstream file(filename);
 
@@ -113,6 +126,12 @@ void RSAClient::savePrimesToFile(const char* filename){
     file.close();
 }
 
+/*
+* save the key to a file
+*
+* @param filename : the name of the file to save to
+* @param key : the key to save
+*/
 void RSAClient::saveKeyToFile(const char* filename, std::pair<mpz_class,mpz_class>& key){
     std::ofstream file(filename);
 
@@ -122,6 +141,9 @@ void RSAClient::saveKeyToFile(const char* filename, std::pair<mpz_class,mpz_clas
     file.close();
 }
 
+/*
+* generate the keys need for RSA
+*/
 void RSAClient::generateKeys() {
 
     // generate the prime numbers
@@ -155,6 +177,11 @@ void RSAClient::generateKeys() {
     saveKeyToFile("d_n.txt", m_privateKey);
 }
 
+/*
+* generate a random number that is coprime with phi
+*
+* @param returnVal : the random number to return
+*/
 void RSAClient::generateEValue(mpz_class& returnVal) {
     // generate a random number
     gmp_randstate_t state;
@@ -172,6 +199,10 @@ void RSAClient::generateEValue(mpz_class& returnVal) {
 
 }
 
+/*
+* generate a prime number
+* @param returnVal : the prime number to return
+*/
 void RSAClient::genPrime(mpz_class& returnVal) {
     // generate primes p and q
         // 1. Initialize a GMP random state.
@@ -192,7 +223,13 @@ void RSAClient::genPrime(mpz_class& returnVal) {
         }
 }
 
-// Fermat's test: returns false if candidate n is composite
+/*
+* fermats little theorem test for primality
+*
+* @param n : the number to test
+* @param iterations : the number of iterations to run the test
+* @return : true if the number is probably prime, false if it is definitely composite
+*/
 bool RSAClient::fermatTest(const mpz_class n, int iterations) {
     // 1. Quick checks
     // n < 2 => not prime
@@ -243,6 +280,12 @@ bool RSAClient::fermatTest(const mpz_class n, int iterations) {
     return true;
 }
 
+/*
+* Helper function to load a file into a string
+*
+* @param filename : the name of the file to load
+* @return : the contents of the file as a string
+*/
 std::string RSAClient::loadFile(std::string filename){
     std::ifstream t(filename);
     std::stringstream buffer;
