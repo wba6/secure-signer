@@ -2,18 +2,13 @@
 #include <iostream>
 
 int main(int argc, char* argv[]) {
-    // // Check for proper number of arguments.
-    // if (argc != 4) {
-    //     std::cerr << "Usage: " << argv[0] << " <keyParameter> <operation> <filename>" << std::endl;
-    //     std::cerr << "       operation: s (sign) or v (verify)" << std::endl;
-    //     return 1;
-    // }
+    if (argc < 2) {
+        std::cerr << "Usage: " << argv[0] << " <keyParameter> [operation] [filename]" << std::endl;
+        return 1;
+    }
 
     // Convert first argument to an integer key parameter.
     int keyParameter = std::stoi(argv[1]);
-
-
-
 
     if (keyParameter == 1) {
         RSAClient client = RSAClient(true);
