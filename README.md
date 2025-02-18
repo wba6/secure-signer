@@ -15,7 +15,7 @@ Ensure that you have GMP installed on your system. On many Linux distributions, 
 - **Ubuntu/Debian:**
   ```bash
   sudo apt-get update
-  sudo apt-get install libgmp-dev
+  sudo apt install libgmp-dev
   ```
 
 - **Fedora:**
