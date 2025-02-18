@@ -74,3 +74,12 @@ endif()
 
 
 include_directories(${GMP_INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/vendor)
+
+add_executable(secure_signer
+  main.cpp
+  RSAClient.cpp
+  RSAClient.hpp
+)
+
+# Link the executable with the GMP library
+target_link_libraries(secure_signer ${GMP_LIBRARY})
