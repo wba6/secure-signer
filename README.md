@@ -9,6 +9,11 @@ It can be cloned using
 git clone --recursive https://github.com/wba6/secure-signer.git
 ```
 
+If you used github code spaces run
+```bash
+git submodule update --init
+```
+
 ### 2. **Install Dependencies**
 Ensure that you have GMP installed on your system. On many Linux distributions, you can install it via your package manager:
 
