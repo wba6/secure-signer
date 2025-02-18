@@ -2,6 +2,7 @@
 #include <iostream>
 
 int main(int argc, char* argv[]) {
+    // guard against too few arguments
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <keyParameter> [operation] [filename]" << std::endl;
         return 1;
@@ -11,6 +12,7 @@ int main(int argc, char* argv[]) {
     // Convert first argument to an integer key parameter.
     int keyParameter = std::stoi(argv[1]);
 
+    // run the appropriate function based on the key parameter
     if (keyParameter == 1) {
         RSAClient client = RSAClient(true);
     } else if (keyParameter == 2) {
