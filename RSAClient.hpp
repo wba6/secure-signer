@@ -12,10 +12,10 @@
 class RSAClient {
 public:
     RSAClient();
-    ~RSAClient();
+    ~RSAClient() = default;
 
     void sign(const std::string& fileName);
-    void checkSignature(const std::string& fileName, const std::pair<mpz_class,mpz_class>& publicKey);
+    bool checkSignature(const std::string& fileName, const std::pair<mpz_class,mpz_class>& publicKey);
     void encrypt(const std::string& message, mpz_class& returnVal, const std::pair<mpz_class,mpz_class>& publicKey);
     void decrypt(const mpz_class& message, std::string& returnVal);
     const std::pair<mpz_class,mpz_class>& getPublicKey() { return m_publicKey; };
@@ -27,6 +27,7 @@ private:
     bool fermatTest(const mpz_class n, int iterations = 1000);
     void savePrimesToFile(const char* filename);
     void saveKeyToFile(const char* filename, std::pair<mpz_class,mpz_class>& key);
+    bool modInvert(mpz_class &rop, const mpz_class &op1, const mpz_class &op2);
 private:
     mpz_class m_p;
     mpz_class m_q;
@@ -36,6 +37,7 @@ private:
     mpz_class m_phi;
     std::pair<mpz_class,mpz_class> m_publicKey;
     std::pair<mpz_class,mpz_class> m_privateKey;
+    const uint PRIME_SIZE = 256;// size of the prime numbers in bits
 };
 
 #endif // RSACLIENT_HPP

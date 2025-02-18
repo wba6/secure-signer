@@ -10,18 +10,23 @@
 #include <chrono>
 #include <gmp.h>
 #include <fstream>
-const uint PRIME_SIZE = 256;// size of the prime numbers in bits
+
+// constructor
 RSAClient::RSAClient() {
     // generate the prime numbers
     generateKeys();
 }
 
-RSAClient::~RSAClient() {
-}
-
+/*
+* sign a file by putting the encrypted hash of the file in the file
+*
+* @param fileName : the name of the file to sign
+*/
 void RSAClient::sign(const std::string& fileName) {
     std::string hexMessage, fileContents = loadFile(fileName);
     picosha2::hash256_hex_string(fileContents, hexMessage);
+
+    std::cout << "Hex message length: " << hexMessage.length() << std::endl;
 
     mpz_class messageNum;
     if (mpz_set_str(messageNum.get_mpz_t(), hexMessage.c_str(), 16) != 0) {
@@ -37,8 +42,49 @@ void RSAClient::sign(const std::string& fileName) {
     //save signature to file
     std::string signedFileName = fileName + ".signed";
     std::ofstream file(signedFileName);
-    file << fileContents << signature.get_str();
+    std::string signatureStr = mpz_get_str(nullptr, 16, signature.get_mpz_t());
+
+    //pad the signature to 128 characters
+    while (signatureStr.length() != 128 && signatureStr.length() < 128)
+    {
+        signatureStr = "0" + signatureStr;
+    }
+
+    //write the file contents and the signature to the file
+    file << fileContents << signatureStr;
+    std::cout << "Signature lehgth: " << signatureStr.length() << std::endl;
     file.close();
+}
+
+/*
+* check the signature of a file
+*
+* @param fileName : the name of the file to check
+* @param publicKey : the public key to use to check the signature
+*/
+bool RSAClient::checkSignature(const std::string& fileName, const std::pair<mpz_class,mpz_class>& publicKey) {
+    std::string hexMessage, fileContentsSigned = loadFile(fileName);
+    uint SIGNATURE_SIZE = 128;
+    std::string fileContents = fileContentsSigned.substr(0,fileContentsSigned.length()-(SIGNATURE_SIZE));
+    std::string signatureStr = fileContentsSigned.substr(fileContentsSigned.length()-(SIGNATURE_SIZE),SIGNATURE_SIZE);
+    std::cout << "Signature: " << signatureStr << "\n" << "fileContents: " << fileContents.substr(fileContents.length()-(200), fileContents.length()) << std::endl;
+    picosha2::hash256_hex_string(fileContents, hexMessage);
+
+    mpz_class signatureNum;
+    if (mpz_set_str(signatureNum.get_mpz_t(), signatureStr.c_str(), 16) != 0) {
+        throw std::runtime_error("Invalid hex string for encryption.");
+    }
+
+    mpz_class decryptedSignature;
+    mpz_powm(decryptedSignature.get_mpz_t(),
+                 signatureNum.get_mpz_t(),
+                 publicKey.first.get_mpz_t(),
+                 publicKey.second.get_mpz_t());
+
+    std::cout << "Decrypted signature: " << mpz_get_str(nullptr, 16, decryptedSignature.get_mpz_t()) << std::endl;
+    std::cout << "Hex message: " << hexMessage << std::endl;
+
+    return mpz_get_str(nullptr, 16, decryptedSignature.get_mpz_t()) == hexMessage;
 }
 
 void RSAClient::encrypt(const std::string& hexMessage,
@@ -79,7 +125,11 @@ void RSAClient::decrypt(const mpz_class& cipher, std::string& hexMessageOut) {
     free(hexStr); // mpz_get_str uses malloc() internally
 }
 
-
+/*
+* save the prime numbers to a file
+*
+* @param filename : the name of the file to save to
+*/
 void RSAClient::savePrimesToFile(const char* filename){
     std::ofstream file(filename);
 
@@ -89,6 +139,12 @@ void RSAClient::savePrimesToFile(const char* filename){
     file.close();
 }
 
+/*
+* save the key to a file
+*
+* @param filename : the name of the file to save to
+* @param key : the key to save
+*/
 void RSAClient::saveKeyToFile(const char* filename, std::pair<mpz_class,mpz_class>& key){
     std::ofstream file(filename);
 
@@ -98,6 +154,9 @@ void RSAClient::saveKeyToFile(const char* filename, std::pair<mpz_class,mpz_clas
     file.close();
 }
 
+/*
+* generate the keys need for RSA
+*/
 void RSAClient::generateKeys() {
 
     // generate the prime numbers
@@ -112,6 +171,7 @@ void RSAClient::generateKeys() {
 
     // calculate n
     m_n = m_p * m_q;
+    std::cout << "n:" << m_n.get_str().length() << std::endl;
 
     // calculate phi
     m_phi = (m_p-1) * (m_q-1);
@@ -120,8 +180,9 @@ void RSAClient::generateKeys() {
     generateEValue(m_e);
 
     // calculate d
-    mpz_invert(m_d.get_mpz_t(), m_e.get_mpz_t(), m_phi.get_mpz_t());
+    modInvert(m_d, m_e, m_phi);
 
+    std::cout << "d:" << m_d.get_str().length() << std::endl;
     // set the keys
     m_publicKey = std::make_pair(m_e, m_n);
     m_privateKey = std::make_pair(m_d, m_n);
@@ -131,6 +192,11 @@ void RSAClient::generateKeys() {
     saveKeyToFile("d_n.txt", m_privateKey);
 }
 
+/*
+* generate a random number that is coprime with phi
+*
+* @param returnVal : the random number to return
+*/
 void RSAClient::generateEValue(mpz_class& returnVal) {
     // generate a random number
     gmp_randstate_t state;
@@ -148,6 +214,10 @@ void RSAClient::generateEValue(mpz_class& returnVal) {
 
 }
 
+/*
+* generate a prime number
+* @param returnVal : the prime number to return
+*/
 void RSAClient::genPrime(mpz_class& returnVal) {
     // generate primes p and q
         // 1. Initialize a GMP random state.
@@ -168,7 +238,13 @@ void RSAClient::genPrime(mpz_class& returnVal) {
         }
 }
 
-// Fermat's test: returns false if candidate n is composite
+/*
+* fermats little theorem test for primality
+*
+* @param n : the number to test
+* @param iterations : the number of iterations to run the test
+* @return : true if the number is probably prime, false if it is definitely composite
+*/
 bool RSAClient::fermatTest(const mpz_class n, int iterations) {
     // 1. Quick checks
     // n < 2 => not prime
@@ -219,6 +295,56 @@ bool RSAClient::fermatTest(const mpz_class n, int iterations) {
     return true;
 }
 
+/*
+ * Computes the modular inverse of op1 modulo op2.
+ *
+ * This function implements the extended Euclidean algorithm.
+ *
+ * @param rop : the result of the modular inverse
+ * @param op1 : the number to invert
+ * @param op2 : the modulus
+ *
+ * @return : true if the inverse exists, false otherwise
+ */
+bool RSAClient::modInvert(mpz_class &rop, const mpz_class &op1, const mpz_class &op2) {
+    // Initialize remainders and coefficients:
+    mpz_class r0 = op1, r1 = op2;
+    mpz_class s0 = 1, s1 = 0;
+    mpz_class quotient, temp;
+
+    // Extended Euclidean algorithm loop:
+    while (r1 != 0) {
+        quotient = r0 / r1;
+
+        // Update remainders: (r0, r1) = (r1, r0 - quotient * r1)
+        temp = r1;
+        r1 = r0 - quotient * r1;
+        r0 = temp;
+
+        // Update coefficients: (s0, s1) = (s1, s0 - quotient * s1)
+        temp = s1;
+        s1 = s0 - quotient * s1;
+        s0 = temp;
+    }
+
+    // If gcd(op1, op2) is not 1, the inverse does not exist.
+    if (r0 != 1)
+        return false;
+
+    // The modular inverse is s0, adjusted to be positive.
+    rop = s0 % op2;
+    if (rop < 0)
+        rop += op2;
+
+    return true;
+}
+
+/*
+* Helper function to load a file into a string
+*
+* @param filename : the name of the file to load
+* @return : the contents of the file as a string
+*/
 std::string RSAClient::loadFile(std::string filename){
     std::ifstream t(filename);
     std::stringstream buffer;
