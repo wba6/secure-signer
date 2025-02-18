@@ -10,11 +10,45 @@
 #include <chrono>
 #include <gmp.h>
 #include <fstream>
+#include <ostream>
 
 // constructor
-RSAClient::RSAClient() {
+RSAClient::RSAClient(bool generateValues) {
     // generate the prime numbers
-    generateKeys();
+    if (generateValues) {
+        generateKeys();
+    } else {
+        loadPublicKey();
+        loadPrivateKey();
+    }
+}
+
+/*
+* load the public key from a file
+*/
+void RSAClient::loadPublicKey() {
+    std::ifstream file("e_n.txt");
+    std::string e, n;
+    file >> e >> n;
+    mpz_set_str(m_e.get_mpz_t(), e.c_str(), 10);
+    mpz_set_str(m_n.get_mpz_t(), n.c_str(), 10);
+    m_publicKey = std::make_pair(m_e, m_n);
+    std::cout << "Public key loaded: " << m_publicKey.first.get_str() << ", " << m_publicKey.second.get_str() << std::endl;
+    std::flush(std::cout);
+}
+
+/*
+* load the private key from a file
+*/
+void RSAClient::loadPrivateKey() {
+    std::ifstream file("d_n.txt");
+    std::string d, n;
+    file >> d >> n;
+    mpz_set_str(m_d.get_mpz_t(), d.c_str(), 10);
+    mpz_set_str(m_n.get_mpz_t(), n.c_str(), 10);
+    m_privateKey = std::make_pair(m_d, m_n);
+    std::cout << "Private key loaded: " << m_privateKey.first.get_str() << ", " << m_privateKey.second.get_str() << std::endl;
+    std::flush(std::cout);
 }
 
 /*
@@ -52,6 +86,7 @@ void RSAClient::sign(const std::string& fileName) {
 
     //write the file contents and the signature to the file
     file << fileContents << signatureStr;
+    std::cout << "Signature: " << signatureStr << std::endl;
     file.close();
 }
 
@@ -68,7 +103,8 @@ bool RSAClient::checkSignature(const std::string& fileName, const std::pair<mpz_
     //split the file contents into the file contents and the signature
     std::string fileContents = fileContentsSigned.substr(0,fileContentsSigned.length()-(SIGNATURE_SIZE));
     std::string signatureStr = fileContentsSigned.substr(fileContentsSigned.length()-(SIGNATURE_SIZE),SIGNATURE_SIZE);
-
+    std::cout << "signature: " << signatureStr << std::endl;
+    std::flush(std::cout);
     // hash the file contents to be compared to the decrypted signature
     picosha2::hash256_hex_string(fileContents, hexMessage);
 
