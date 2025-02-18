@@ -26,13 +26,13 @@ void RSAClient::sign(const std::string& fileName) {
     std::string hexMessage, fileContents = loadFile(fileName);
     picosha2::hash256_hex_string(fileContents, hexMessage);
 
-    std::cout << "Hex message length: " << hexMessage.length() << std::endl;
-
+    // convert the hex string to a number (base 16)
     mpz_class messageNum;
     if (mpz_set_str(messageNum.get_mpz_t(), hexMessage.c_str(), 16) != 0) {
         throw std::runtime_error("Invalid hex string for encryption.");
     }
 
+    // encrypt the message
     mpz_class signature;
     mpz_powm(signature.get_mpz_t(),
                  messageNum.get_mpz_t(),
@@ -52,7 +52,6 @@ void RSAClient::sign(const std::string& fileName) {
 
     //write the file contents and the signature to the file
     file << fileContents << signatureStr;
-    std::cout << "Signature lehgth: " << signatureStr.length() << std::endl;
     file.close();
 }
 
@@ -65,64 +64,28 @@ void RSAClient::sign(const std::string& fileName) {
 bool RSAClient::checkSignature(const std::string& fileName, const std::pair<mpz_class,mpz_class>& publicKey) {
     std::string hexMessage, fileContentsSigned = loadFile(fileName);
     uint SIGNATURE_SIZE = 128;
+
+    //split the file contents into the file contents and the signature
     std::string fileContents = fileContentsSigned.substr(0,fileContentsSigned.length()-(SIGNATURE_SIZE));
     std::string signatureStr = fileContentsSigned.substr(fileContentsSigned.length()-(SIGNATURE_SIZE),SIGNATURE_SIZE);
-    std::cout << "Signature: " << signatureStr << "\n" << "fileContents: " << fileContents.substr(fileContents.length()-(200), fileContents.length()) << std::endl;
+
+    // hash the file contents to be compared to the decrypted signature
     picosha2::hash256_hex_string(fileContents, hexMessage);
 
+    // convert the hex string to a number (base 16)
     mpz_class signatureNum;
     if (mpz_set_str(signatureNum.get_mpz_t(), signatureStr.c_str(), 16) != 0) {
         throw std::runtime_error("Invalid hex string for encryption.");
     }
 
+    // decrypt the signature
     mpz_class decryptedSignature;
     mpz_powm(decryptedSignature.get_mpz_t(),
                  signatureNum.get_mpz_t(),
                  publicKey.first.get_mpz_t(),
                  publicKey.second.get_mpz_t());
 
-    std::cout << "Decrypted signature: " << mpz_get_str(nullptr, 16, decryptedSignature.get_mpz_t()) << std::endl;
-    std::cout << "Hex message: " << hexMessage << std::endl;
-
     return mpz_get_str(nullptr, 16, decryptedSignature.get_mpz_t()) == hexMessage;
-}
-
-void RSAClient::encrypt(const std::string& hexMessage,
-                        mpz_class& cipher,
-                        const std::pair<mpz_class, mpz_class>& publicKey) {
-    // Convert the hex string to a number (base 16)
-    mpz_class messageNum;
-    if (mpz_set_str(messageNum.get_mpz_t(), hexMessage.c_str(), 16) != 0) {
-        throw std::runtime_error("Invalid hex string for encryption.");
-    }
-
-    std::cout << "Message as number: ";
-    mpz_out_str(stdout, 10, messageNum.get_mpz_t());
-    std::cout << std::endl;
-
-    // Encrypt: cipher = messageNum^e mod n
-    mpz_powm(cipher.get_mpz_t(),
-             messageNum.get_mpz_t(),
-             publicKey.first.get_mpz_t(),
-             publicKey.second.get_mpz_t());
-}
-
-void RSAClient::decrypt(const mpz_class& cipher, std::string& hexMessageOut) {
-    // Decrypt: decrypted = cipher^d mod n, using your stored private key (d, n)
-    mpz_class decrypted;
-    mpz_powm(decrypted.get_mpz_t(),
-             cipher.get_mpz_t(),
-             m_privateKey.first.get_mpz_t(),   // d
-             m_privateKey.second.get_mpz_t()); // n
-
-    std::cout << "Decrypted number: ";
-    mpz_out_str(stdout, 10, decrypted.get_mpz_t());
-    std::cout << std::endl;
-
-    // Convert the decrypted number back to a hex string
-    char* hexStr = mpz_get_str(nullptr, 16, decrypted.get_mpz_t());
-    hexMessageOut = std::string(hexStr);
-    free(hexStr); // mpz_get_str uses malloc() internally
 }
 
 /*
@@ -163,15 +126,8 @@ void RSAClient::generateKeys() {
     genPrime(m_p);
     genPrime(m_q);
 
-    mpz_out_str(stdout, 10, m_p.get_mpz_t());
-    std::cout << std::endl;
-
-    mpz_out_str(stdout, 10, m_q.get_mpz_t());
-    std::cout << std::endl;
-
     // calculate n
     m_n = m_p * m_q;
-    std::cout << "n:" << m_n.get_str().length() << std::endl;
 
     // calculate phi
     m_phi = (m_p-1) * (m_q-1);
@@ -182,7 +138,6 @@ void RSAClient::generateKeys() {
     // calculate d
     modInvert(m_d, m_e, m_phi);
 
-    std::cout << "d:" << m_d.get_str().length() << std::endl;
     // set the keys
     m_publicKey = std::make_pair(m_e, m_n);
     m_privateKey = std::make_pair(m_d, m_n);
@@ -211,31 +166,29 @@ void RSAClient::generateEValue(mpz_class& returnVal) {
         mpz_urandomb(returnVal.get_mpz_t(), state, PRIME_SIZE);
         mpz_gcd(gcdResult.get_mpz_t(),returnVal.get_mpz_t(), m_phi.get_mpz_t());
     }
-
 }
 
 /*
 * generate a prime number
+*
 * @param returnVal : the prime number to return
 */
 void RSAClient::genPrime(mpz_class& returnVal) {
     // generate primes p and q
-        // 1. Initialize a GMP random state.
-        gmp_randstate_t state;
-        gmp_randinit_default(state);
+    gmp_randstate_t state;
+    gmp_randinit_default(state);
 
-        // 2. Seed the random number generator.
-        //    Here we use the current time to seed the generator.
-        unsigned long seed = static_cast<unsigned long>(std::chrono::system_clock::now().time_since_epoch().count());
-        gmp_randseed_ui(state, seed);
+    // Use the current time to seed the generator.
+    unsigned long seed = static_cast<unsigned long>(std::chrono::system_clock::now().time_since_epoch().count());
+    gmp_randseed_ui(state, seed);
 
-        // 4. Generate a random number with a specified number of bits.
+    // Generate a random number with a specified number of bits.
+    mpz_urandomb(returnVal.get_mpz_t(), state, PRIME_SIZE);
+
+    // Check if the number is prime
+    while (!fermatTest(returnVal)) {
         mpz_urandomb(returnVal.get_mpz_t(), state, PRIME_SIZE);
-
-        // 5. Check if the number is prime
-        while (!fermatTest(returnVal)) {
-            mpz_urandomb(returnVal.get_mpz_t(), state, PRIME_SIZE);
-        }
+    }
 }
 
 /*
@@ -246,7 +199,6 @@ void RSAClient::genPrime(mpz_class& returnVal) {
 * @return : true if the number is probably prime, false if it is definitely composite
 */
 bool RSAClient::fermatTest(const mpz_class n, int iterations) {
-    // 1. Quick checks
     // n < 2 => not prime
     if (n < 2) {
         return false;
@@ -259,13 +211,13 @@ bool RSAClient::fermatTest(const mpz_class n, int iterations) {
     if (mpz_even_p(n.get_mpz_t())) {
         return false;
     }
-    // 2. Initialize and seed GMP random state
+    // Initialize and seed GMP random state
     gmp_randstate_t randState;
     gmp_randinit_mt(randState);
     unsigned long seed = static_cast<unsigned long>(std::chrono::system_clock::now().time_since_epoch().count());
     gmp_randseed_ui(randState, seed);
 
-    // 3. Perform 'iterations' rounds of Fermat test
+    // 'iterations' rounds of Fermat test
     for (int i = 0; i < iterations; i++) {
         // Create random 'a' in [2 .. n-2]
         mpz_class a, n_minus_2;
@@ -285,7 +237,6 @@ bool RSAClient::fermatTest(const mpz_class n, int iterations) {
             gmp_randclear(randState);
             return false;
         }
-
     }
 
     // Clean up random state

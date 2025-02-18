@@ -18,7 +18,7 @@ if(NOT GMP_LIBRARY)
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR}/vendor/)
-add_executable(secure_signer main.cpp RSAClient.cpp RSAClient.hpp User.cpp User.hpp)
+add_executable(secure_signer main.cpp RSAClient.cpp RSAClient.hpp)
 
 # Link your executable with the GMP library
 target_link_libraries(secure_signer ${GMP_LIBRARY})
