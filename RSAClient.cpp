@@ -298,6 +298,9 @@ bool RSAClient::modInvert(mpz_class &rop, const mpz_class &op1, const mpz_class 
 */
 std::string RSAClient::loadFile(std::string filename){
     std::ifstream t(filename);
+    if (!t) {
+        throw std::runtime_error("Error: File \"" + filename + "\" does not exist or cannot be opened.");
+    }
     std::stringstream buffer;
     buffer << t.rdbuf();
     return (buffer.str());
