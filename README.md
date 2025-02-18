@@ -6,10 +6,15 @@ A app that allows you to sign a document using SHA256 and RSA to varify the sign
 
 **Note**: The easiest way to build is through github codespaces
 
-Make sure you have the source code in your project directory.
+Make sure you have the source code in your project directory(github codespaces handles this for you).
+
 It can be cloned using
 ```bash
 git clone --recursive https://github.com/wba6/secure-signer.git
+```
+Move into the project directory
+```bash
+cd ./secure-signer
 ```
 
 If you used github code spaces run
