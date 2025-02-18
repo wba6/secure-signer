@@ -170,6 +170,7 @@ void RSAClient::generateEValue(mpz_class& returnVal) {
 
 /*
 * generate a prime number
+*
 * @param returnVal : the prime number to return
 */
 void RSAClient::genPrime(mpz_class& returnVal) {
