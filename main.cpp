@@ -1,10 +1,8 @@
 #include "RSAClient.hpp"
 #include <iostream>
 
-std::string loadFile(std::string filename);
 int main() {
     RSAClient client;
-
 
     std::pair<mpz_class,mpz_class> publicKey = client.getPublicKey();
 
