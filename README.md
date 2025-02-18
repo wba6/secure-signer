@@ -3,7 +3,11 @@ A app that allows you to sign a document using SHA256 and RSA to varify the sign
 
 ## Build Instructions
 ### 1. **Clone or Download the Source**
-Make sure you have the source code (including `main.cpp`, `RSAClient.cpp`, `RSAClient.hpp`, `User.cpp`, and `User.hpp`) and the `CMakeLists.txt` file in your project directory.
+Make sure you have the source code in your project directory.
+It can be cloned using
+```bash
+git clone --recursive https://github.com/wba6/secure-signer.git
+```
 
 ### 2. **Install Dependencies**
 Ensure that you have GMP installed on your system. On many Linux distributions, you can install it via your package manager:
