@@ -10,6 +10,17 @@
 #include <utility>
 
 class RSAClient {
+private:
+    mpz_class m_p;
+    mpz_class m_q;
+    mpz_class m_n;
+    mpz_class m_e;
+    mpz_class m_d;
+    mpz_class m_phi;
+    std::pair<mpz_class,mpz_class> m_publicKey;
+    std::pair<mpz_class,mpz_class> m_privateKey;
+    const uint PRIME_SIZE = 256;// size of the prime numbers in bits
+
 public:
     RSAClient();
     ~RSAClient() = default;
@@ -100,16 +111,6 @@ private:
     * @return : the contents of the file as a string
     */
     std::string loadFile(std::string filename);
-private:
-    mpz_class m_p;
-    mpz_class m_q;
-    mpz_class m_n;
-    mpz_class m_e;
-    mpz_class m_d;
-    mpz_class m_phi;
-    std::pair<mpz_class,mpz_class> m_publicKey;
-    std::pair<mpz_class,mpz_class> m_privateKey;
-    const uint PRIME_SIZE = 256;// size of the prime numbers in bits
 };
 
 #endif // RSACLIENT_HPP
