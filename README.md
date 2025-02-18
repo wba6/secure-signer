@@ -3,6 +3,9 @@ A app that allows you to sign a document using SHA256 and RSA to varify the sign
 
 ## Build Instructions
 ### 1. **Clone or Download the Source**
+
+**Note**: The easiest way to build is through github codespaces
+
 Make sure you have the source code in your project directory.
 It can be cloned using
 ```bash
@@ -21,11 +24,6 @@ Ensure that you have GMP installed on your system. On many Linux distributions, 
   ```bash
   sudo apt-get update
   sudo apt install libgmp-dev
-  ```
-
-- **Fedora:**
-  ```bash
-  sudo dnf install gmp-devel
   ```
 
 On **Windows**, you might need to download and install GMP from a trusted source or use vcpkg, and ensure that the headers and libraries are accessible.
