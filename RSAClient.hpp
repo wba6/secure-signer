@@ -27,6 +27,7 @@ private:
     bool fermatTest(const mpz_class n, int iterations = 1000);
     void savePrimesToFile(const char* filename);
     void saveKeyToFile(const char* filename, std::pair<mpz_class,mpz_class>& key);
+    bool modInvert(mpz_class &rop, const mpz_class &op1, const mpz_class &op2);
 private:
     mpz_class m_p;
     mpz_class m_q;
