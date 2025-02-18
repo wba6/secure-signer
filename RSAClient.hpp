@@ -22,7 +22,7 @@ private:
     const uint PRIME_SIZE = 256;// size of the prime numbers in bits
 
 public:
-    RSAClient();
+    RSAClient(bool generateKeys = true);
     ~RSAClient() = default;
 
     /*
@@ -48,6 +48,16 @@ public:
     const std::pair<mpz_class,mpz_class>& getPublicKey() { return m_publicKey; };
 
 private:
+    /*
+    * load the private key from a file
+    */
+    void loadPrivateKey();
+
+    /*
+    * load the public key from a file
+    */
+    void loadPublicKey();
+
     /*
     * save the prime numbers to a file
     *

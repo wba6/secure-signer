@@ -10,11 +10,41 @@
 #include <chrono>
 #include <gmp.h>
 #include <fstream>
+#include <ostream>
 
 // constructor
-RSAClient::RSAClient() {
+RSAClient::RSAClient(bool generateValues) {
     // generate the prime numbers
-    generateKeys();
+    if (generateValues) {
+        generateKeys();
+    } else {
+        loadPublicKey();
+        loadPrivateKey();
+    }
+}
+
+/*
+* load the public key from a file
+*/
+void RSAClient::loadPublicKey() {
+    std::ifstream file("e_n.txt");
+    std::string e, n;
+    file >> e >> n;
+    mpz_set_str(m_e.get_mpz_t(), e.c_str(), 10);
+    mpz_set_str(m_n.get_mpz_t(), n.c_str(), 10);
+    m_publicKey = std::make_pair(m_e, m_n);
+}
+
+/*
+* load the private key from a file
+*/
+void RSAClient::loadPrivateKey() {
+    std::ifstream file("d_n.txt");
+    std::string d, n;
+    file >> d >> n;
+    mpz_set_str(m_d.get_mpz_t(), d.c_str(), 10);
+    mpz_set_str(m_n.get_mpz_t(), n.c_str(), 10);
+    m_privateKey = std::make_pair(m_d, m_n);
 }
 
 /*
