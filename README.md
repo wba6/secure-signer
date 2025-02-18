@@ -61,7 +61,7 @@ This will compile the project and produce an executable named `secure_signer`.
 ### 6. **Run the Executable**
 After the build completes, you can run the executable. For example, from the `build` directory:
 ```bash
-./secure_signer
+./secure_signer <keyParameter> [operation] [filename]
 ```
 
 **Note:** All files are relative to the executable file
