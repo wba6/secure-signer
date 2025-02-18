@@ -7,6 +7,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+
     // Convert first argument to an integer key parameter.
     int keyParameter = std::stoi(argv[1]);
 
@@ -29,6 +30,9 @@ int main(int argc, char* argv[]) {
                 std::cout << "Signature is invalid!" << std::endl;
             }
         }
+    } else {
+        std::cerr << "Invalid key parameter. Use 1 to generate keys or 2 to load keys." << std::endl;
+        return 1;
     }
 
     return 0;
